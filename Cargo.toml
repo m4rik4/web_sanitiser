@@ -1,6 +1,28 @@
 [package]
-name = "web_sanitiser"
+name = "web-sanitiser"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+authors = [
+    "Filippo Barboni <s352701@studenti.polito.it>",
+    "Marika Fuccio <s354828@studenti.polito.it>",
+    "Alessio Belluardo <s359092@studenti.polito.it>",
+]
+description = "utility difensiva in rust che ispeziona contenuto web non fidato, ne neutralizza le parti pericolose e produce un report json"
+
+# la libreria contiene il motore, il binario è la cli che lo usa (traccia sez. 6).
+# nel codice si scrive web_sanitiser, perché in rust il trattino non è ammesso
+# negli identificatori; da terminale invece si digita web-sanitiser.
+[lib]
+name = "web_sanitiser"
+path = "src/lib.rs"
+
+[[bin]]
+name = "web-sanitiser"
+path = "src/main.rs"
 
 [dependencies]
+
+# build ottimizzata, usata per le misure di performance
+[profile.release]
+opt-level = 3
+lto = true

@@ -1,1 +1,10 @@
+# artefatti di compilazione, li rigenera cargo
 /target
+
+# file di configurazione degli ide che usiamo
+.idea/
+.vscode/
+
+# output prodotti dal tool quando lo eseguiamo
+/reports
+/sanitised-out

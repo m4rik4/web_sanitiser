@@ -9,18 +9,19 @@ authors = [
 ]
 description = "utility difensiva in rust che ispeziona contenuto web non fidato, ne neutralizza le parti pericolose e produce un report json"
 
-# la libreria contiene il motore, il binario è la cli che lo usa (traccia sez. 6).
-# nel codice si scrive web_sanitiser, perché in rust il trattino non è ammesso
-# negli identificatori; da terminale invece si digita web-sanitiser.
+# la libreria contiene il motore, il binario è la cli che lo usa (traccia sez. 6)
 [lib]
-name = "web_sanitiser"
+name = "web_sanitiser"  # underscore, è il nome che si scrive nel codice
 path = "src/lib.rs"
 
 [[bin]]
-name = "web-sanitiser"
+name = "web-sanitiser"  # trattino, è il nome che si digita da terminale
 path = "src/main.rs"
 
 [dependencies]
+serde_json = "1" # lettura e scrittura json
+url = "2" # parsing degli url
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] } # client http, rustls al posto di openssl
 
 # build ottimizzata, usata per le misure di performance
 [profile.release]

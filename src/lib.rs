@@ -12,7 +12,9 @@
 //! rispettare il compilatore
 
 pub mod error;
+pub mod report;
 
 // api principali: si usano come web_sanitiser::Nome, senza passare dal modulo
 // che le contiene
 pub use error::{Result, SanitiserError};
+pub use report::{Action, JobReport, JobStatus, Report};

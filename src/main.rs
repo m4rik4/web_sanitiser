@@ -16,6 +16,8 @@
 use clap::Parser;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::sync::Arc;
+use web_sanitiser::SanitiserPolicy;
 
 /// argomenti della riga di comando; i doc-comment dei campi diventano il testo
 /// che l'utente legge con `--help`
@@ -50,8 +52,16 @@ struct Args {
 fn main() -> ExitCode {
     let args = Args::parse();
 
-    // mostra come clap ha interpretato la riga di comando
-    println!("{args:?}");
+    // 1. policy dal modulo `policy`
+    let policy = match SanitiserPolicy::load(args.config.as_deref()) {
+        Ok(p) => Arc::new(p),
+        Err(e) => {
+            eprintln!("Errore nel caricamento della policy: {e}");
+            return ExitCode::from(2);
+        }
+    };
+
+    println!("{:?}", policy);
 
     ExitCode::SUCCESS
 }

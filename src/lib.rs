@@ -13,8 +13,10 @@
 
 pub mod error;
 pub mod report;
+pub mod policy;
 
 // api principali: si usano come web_sanitiser::Nome, senza passare dal modulo
 // che le contiene
 pub use error::{Result, SanitiserError};
 pub use report::{Action, JobReport, JobStatus, Report};
+pub use policy::SanitiserPolicy;

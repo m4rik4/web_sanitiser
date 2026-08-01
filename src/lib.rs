@@ -14,6 +14,7 @@
 pub mod error;
 pub mod report;
 pub mod policy;
+pub mod input;
 
 // api principali: si usano come web_sanitiser::Nome, senza passare dal modulo
 // che le contiene

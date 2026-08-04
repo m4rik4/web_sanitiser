@@ -1,6 +1,7 @@
 //! sezione di input: preleva file locali, alberi di directory e URL
 
 pub mod file;
+pub mod network;
 
 use std::path::PathBuf;
 

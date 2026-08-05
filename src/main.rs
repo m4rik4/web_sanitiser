@@ -2,8 +2,8 @@
 //! front-end a riga di comando del web sanitiser
 //!
 //! legge gli argomenti, carica la policy, avvia la pipeline della libreria
-//! `web_sanitiser` e stampa il report json; la logica di sanitizzazione non sta
-//! qui, ma tutta nella libreria
+//! `web_sanitiser`, scrive gli output ripuliti e stampa il report json; la
+//! logica di sanitizzazione non sta qui, ma tutta nella libreria
 //!
 //! exit code restituiti:
 //! - `0`: tutti gli input sono stati sanitizzati
@@ -13,12 +13,11 @@
 //! `forbid(unsafe_code)` vieta qualsiasi blocco `unsafe` nel crate, e lo fa
 //! rispettare il compilatore
 
-use clap::Parser;
 use std::path::PathBuf;
-use std::println;
 use std::process::ExitCode;
 use std::sync::Arc;
-use web_sanitiser::SanitiserPolicy;
+use clap::Parser;
+use web_sanitiser::{run_sanitisation_pipeline, SanitiserPolicy};
 use web_sanitiser::input::{classify_arg, file, Source};
 
 /// argomenti della riga di comando; i doc-comment dei campi diventano il testo
@@ -36,11 +35,11 @@ struct Args {
 
     /// numero di thread, 0 per usarne quanti sono i core
     #[arg(short = 't', long, default_value_t = 0)]
-    threads: usize, // inseriti in CLI per misurare la speed-up curves
+    threads: usize, // configurabile per tracciare le curve di speed-up (traccia sez. 7)
 
     /// directory dove scrivere gli output ripuliti
-    #[arg(short = 'o', long)]
-    out_dir: Option<PathBuf>,
+    #[arg(short = 'o', long, default_value = "sanitised-out")]
+    out_dir: PathBuf, // senza un default l'invocazione minima darebbe il report ma non i file ripuliti (traccia sez. 3)
 
     /// file dove scrivere il report, senza questo finisce su stdout
     #[arg(short = 'r', long)]
@@ -51,17 +50,19 @@ struct Args {
     verbose: bool,
 }
 
-// adattabilità del core richiesto dalla traccia nella sezione 4
+/// quanti thread usare quando l'utente non lo specifica
+///
+/// la traccia (sez. 4) chiede che il throughput scali con i core disponibili
 fn default_threads() -> usize {
-    std::thread::available_parallelism() // legge core disponibili dal SO
-        .map(|n| n.get())// estrae valore numerico
-        .unwrap_or(4) // usa 4 se fallisce
+    std::thread::available_parallelism() // core visibili al processo
+        .map(|n| n.get()) // da NonZeroUsize a usize
+        .unwrap_or(4) // se il sistema non sa dirlo, un valore prudente
 }
 
 fn main() -> ExitCode {
     let args = Args::parse();
 
-    // 1. policy dal modulo `policy`
+    // 1. policy: quella del file passato con -c, altrimenti quella di default
     let policy = match SanitiserPolicy::load(args.config.as_deref()) {
         Ok(p) => Arc::new(p),
         Err(e) => {
@@ -71,16 +72,16 @@ fn main() -> ExitCode {
     };
 
     println!("{:?}", policy); // DA RIMUOVERE
- 
+
     // 2. set-up degli input: le directory trasformate in liste di file
     let mut sources: Vec<Source> = Vec::new();
     for arg in &args.inputs {
         match classify_arg(arg) {
-            Source::File(path) if path.is_dir() => match file::expand_dir(&path) { // entra solo se è una directory
-                Ok(files) => sources.extend(files.into_iter().map(Source::File)), // come fossero più push insieme nel vec
+            Source::File(path) if path.is_dir() => match file::expand_dir(&path) { // una directory non è un input: lo sono i file dentro
+                Ok(files) => sources.extend(files.into_iter().map(Source::File)), // ognuno entra come input a sé
                 Err(e) => eprintln!("Impossibile leggere la directory {}: {e}", path.display()),
             },
-            other => sources.push(other), // entra con file singolo o altro
+            other => sources.push(other), // file e url si elaborano direttamente
         }
     }
     if sources.is_empty() {
@@ -98,6 +99,17 @@ fn main() -> ExitCode {
     }
 
     println!("{:?}", sources); // DA RIMUOVERE
+
+    // 3. esecuzione della pipeline concorrente; per la libreria `out_dir` è opzionale, la cli invece ne ha sempre uno
+    let report = match run_sanitisation_pipeline(sources, policy, threads, Some(args.out_dir)) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Errore della pipeline: {e}");
+            return ExitCode::from(2);
+        }
+    };
+
+    println!("{:?}", report); // DA RIMUOVERE
 
     ExitCode::SUCCESS
 }

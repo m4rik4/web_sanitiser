@@ -35,12 +35,3 @@ pub fn classify_arg(arg: &str) -> Source {
         Source::File(PathBuf::from(arg))
     }
 }
-
-/// contenuto caricato, senza fidarsi del MIME dichiarato
-#[derive(Debug, Clone)]
-pub struct Loaded {
-    pub origin: String,
-    pub kind: &'static str,
-    pub bytes: Vec<u8>,
-    pub declared_mime: Option<String>,
-}

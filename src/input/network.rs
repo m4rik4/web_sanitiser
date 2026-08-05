@@ -1,6 +1,5 @@
 //! costruzione del Client
 
-use crate::input::Loaded;
 use crate::error::{Result, SanitiserError};
 use crate::policy::rules::{host_is_internal, ip_is_internal};
 use crate::policy::SanitiserPolicy;
@@ -92,7 +91,7 @@ pub async fn fetch(
     client: &reqwest::Client,
     url: &str,
     policy: &SanitiserPolicy,
-) -> Result<Loaded> {
+) -> Result<(Vec<u8>, Option<String>)> {
     let parsed = Url::parse(url)?;
     ssrf_guard(&parsed, policy)?;
 
@@ -128,10 +127,5 @@ pub async fn fetch(
         bytes.extend_from_slice(&chunk);  
     }
 
-    Ok(Loaded {
-        origin: url.to_string(),
-        kind: "url",
-        bytes,
-        declared_mime,
-    })
+    Ok((bytes, declared_mime))
 }

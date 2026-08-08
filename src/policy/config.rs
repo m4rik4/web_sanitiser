@@ -3,6 +3,7 @@
 use crate::error::{Result, SanitiserError};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::time::{Instant, Duration};
 
 /// cosa fare con un link sospetto
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -128,5 +129,11 @@ impl SanitiserPolicy {
                 Ok(policy)
             }
         }
+    }
+
+    /// `true` se l'elaborazione iniziata in `started` ha superato il budget di tempo per-input 
+    pub fn time_budget_exceeded(&self, started: Instant) -> bool {
+        self.max_processing_ms > 0
+            && started.elapsed() > Duration::from_millis(self.max_processing_ms)
     }
 }

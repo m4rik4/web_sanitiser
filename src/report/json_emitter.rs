@@ -10,7 +10,7 @@ pub fn to_json_string(report: &Report) -> Result<String> {
     Ok(serde_json::to_string_pretty(report)?)
 }
 
-/// stessa cosa, ma scritta su file
+/// scrive il report json su file
 pub fn write_to_file(report: &Report, path: &Path) -> Result<()> {
     let json = to_json_string(report)?;
     std::fs::write(path, json)?;

@@ -28,7 +28,7 @@ pub enum SanitiserError {
     BudgetExceeded(String),
     /// contenuto respinto in blocco dalla policy
     Refused(String),
-    /// il parsing o la riscrittura del documento è fallita
+    /// errore nel parsing o nella riscrittura del documento
     Parse(String),
 }
 

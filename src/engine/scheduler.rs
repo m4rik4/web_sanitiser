@@ -66,7 +66,7 @@ pub fn run_sanitisation_pipeline(
     };
 
     let (tx, rx) = mpsc::channel::<JobReport>();
-    let n_workers = threads.max(1); // con 0 worker il canale non si chiuderebbe mai
+    let n_workers = threads.max(1); // con 0 worker nessuno consumerebbe la coda e il report uscirebbe vuoto
 
     let mut handles = Vec::with_capacity(n_workers);
     for _ in 0..n_workers {
@@ -88,8 +88,8 @@ pub fn run_sanitisation_pipeline(
         jobs.push(report);
     }
 
-    // prima si svuota il canale, poi si aspettano i thread: al contrario i worker
-    // resterebbero bloccati su un `send` che nessuno legge
+    // prima si svuota il canale, poi si aspettano i thread; invertendo i due passi
+    // i worker resterebbero bloccati su un `send` che nessuno legge
     for h in handles {
         let _ = h.join();
     }

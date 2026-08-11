@@ -3,7 +3,7 @@
 //!
 //! ogni primitiva è scelta sull'uso reale: `Arc` senza lock per ciò che nessuno
 //! modifica, `Mutex` per la coda che invece tutti modificano, i tipi atomici per
-//! i contatori, che sono somme indipendenti
+//! i contatori, dove ogni incremento è indipendente dagli altri
 
 pub mod scheduler;
 mod worker;
@@ -42,9 +42,9 @@ pub struct Statistics {
 }
 
 impl Statistics {
-    /// `Ordering::Relaxed` basta perché sono somme indipendenti: non serve che i
-    /// contatori siano coerenti l'uno con l'altro a metà corsa, serve solo che
-    /// nessun incremento vada perso
+    /// `Ordering::Relaxed` basta perché gli incrementi sono indipendenti fra loro:
+    /// non serve che i contatori siano coerenti l'uno con l'altro a metà corsa,
+    /// serve solo che nessun incremento vada perso
     pub fn record(&self, report: &JobReport) {
         self.actions
             .fetch_add(report.actions.len() as u64, Ordering::Relaxed);

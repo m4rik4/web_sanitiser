@@ -45,7 +45,7 @@ impl Action {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum JobStatus {
-    /// ripulito, con o senza modifiche da fare; se tutti gli input finiscono
+    /// ripulito, con o senza modifiche applicate; se tutti gli input finiscono
     /// così la cli esce con `0`
     Sanitised,
     /// respinto in blocco perché sfora un limite o lo vieta la policy; ne basta
@@ -121,8 +121,8 @@ impl JobReport {
         }
     }
 
-    /// input non elaborabile: qui il contenuto non è stato nemmeno esaminato,
-    /// quindi i byte restano a zero
+    /// input non portato a termine: i byte restano a zero anche se la lettura era
+    /// riuscita, perché una lavorazione fallita non ha misure da riportare
     pub fn errored(input: String, kind: &str, error: impl Into<String>) -> Self {
         JobReport {
             input,

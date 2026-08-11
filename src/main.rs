@@ -100,7 +100,7 @@ fn main() -> ExitCode {
 
     println!("{:?}", sources); // DA RIMUOVERE
 
-    // 3. esecuzione della pipeline concorrente; per la libreria `out_dir` è opzionale, la cli invece ne ha sempre uno
+    // 3. esecuzione della pipeline concorrente; per la libreria `out_dir` è opzionale, la cli invece passa sempre un valore
     let report = match run_sanitisation_pipeline(sources, policy, threads, Some(args.out_dir)) {
         Ok(r) => r,
         Err(e) => {

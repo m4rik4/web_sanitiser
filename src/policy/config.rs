@@ -136,4 +136,44 @@ impl SanitiserPolicy {
         self.max_processing_ms > 0
             && started.elapsed() > Duration::from_millis(self.max_processing_ms)
     }
+
+    /// 'true' se l'host è in una qualsiasi block-list (malware o tracker)
+    pub fn is_host_blocked(&self, host: &str) -> bool {
+        let h = host.to_ascii_lowercase();
+        self.domain_blocklist.iter().any(|d| host_matches(&h, d))
+            || self.tracker_blocklist.iter().any(|d| host_matches(&h, d))
+    }
+
+    /// 'true' se uno '<script src=host>' proviene da un'origine in allow-list, uno script senza 'src' non è mai in allow-list
+    // un 'src' relativo NON è ammesso dato che punta alla stessa origine del documento, che è per definizione non fidata
+    pub fn script_src_allowed(&self, src: Option<&str>) -> bool {
+        match src {
+            None => false,
+            Some(s) => match url::Url::parse(s) {
+                Ok(u) => u
+                    .host_str()
+                    .map(|h| self.script_src_allowlist.iter().any(|a| a == h))
+                    .unwrap_or(false),
+                Err(_) => false,
+            }
+        }
+    }
+
+    /// 'true' se una sorgente di contenuto incorporato ('<iframe>/<object>/<embed>') è in 'iframe_src_allowlist'
+    // come per gli script, un riferimento relativo non è ammesso
+    pub fn embed_src_allowed(&self, src: &str) -> bool {
+        match url::Url::parse(src.trim()) {
+            Ok(u) => u
+                .host_str()
+                .map(|h| self.iframe_src_allowlist.iter().any(|a| a == h))
+                .unwrap_or(false),
+            Err(_) => false,
+        }
+    }
+}
+
+/// controllo di uguaglianza o sotto-dominio di un host rispetto ad una voce di block/tracker list
+fn host_matches(host: &str, entry: &str) -> bool {
+    let e = entry.to_ascii_lowercase();
+    host == e || host.ends_with(&format!(".{e}"))
 }

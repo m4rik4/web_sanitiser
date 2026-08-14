@@ -295,3 +295,37 @@ pub fn mime_mismatch(declared: Option<&str>, sniffed: Option<&str>) -> bool {
 fn base_type(mime: &str) -> &str {
     mime.split('/').next().unwrap_or("")
 }
+
+/// 'true' se il contenuto è HTML, se lo sniffed è None si affida al MIME dichiarato
+pub fn is_html(declared: Option<&str>, sniffed : Option<&str>) -> bool {
+    match sniffed {
+        Some("text/html") => return true,
+        Some(
+            "application/pdf" | "image/png" | "image/jpeg" | "image/gif" | "image/webp"
+            | "application/zip" | "application/gzip",
+        ) => return false,
+        _ => {}
+    }
+    if let Some(d) = declared {
+        if d.to_ascii_lowercase().contains("html") {
+            return true;
+        }
+    }
+    false
+}
+
+/// 'true' se l'host è codificato in punycode (possibile IDN homograph) -> (es. café.com -> xn--caf-dma.com)
+pub fn host_is_punycode(host: &str) -> bool {
+    host.split('.').any(|label| label.starts_with("xn--"))
+}
+
+/// 'true' se un valore URL mostra segni di "host/split" confusion 
+// rileva caratteri ambigui negli URL (backslash o varianti Unicode halfwidth/fullwidth)che potrebbero essere interpretati diversamente da parser o normalizzatori
+pub fn url_has_host_confusion(val: &str) -> bool {
+    let v = val.trim();
+    if v.contains('\\') {
+        return true;
+    }
+    // Blocco Unicode "Halfwidth and Fullwidth Forms" (es. @ - ＠)
+    v.chars().any(|c| ('\u{FF00}'..='\u{FFEF}').contains(&c))
+}

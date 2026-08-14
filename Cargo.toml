@@ -26,6 +26,7 @@ url = "2" # parsing degli url
 tokio = { version = "1", features = ["rt-multi-thread", "time", "net"] } # runtime async che ospita le chiamate di rete
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] } # client http, rustls al posto di openssl
 imagesize = "0.15.0" # dimensioni di un'immagine dalla sua intestazione, senza decodificarla
+lol_html = "1.2" 
 
 # build ottimizzata, usata per le misure di performance
 [profile.release]

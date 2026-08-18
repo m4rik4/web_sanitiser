@@ -2,6 +2,7 @@
 
 pub mod file;
 pub mod network;
+pub mod subresource;
 
 use std::path::PathBuf;
 

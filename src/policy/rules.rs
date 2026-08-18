@@ -329,3 +329,13 @@ pub fn url_has_host_confusion(val: &str) -> bool {
     // Blocco Unicode "Halfwidth and Fullwidth Forms" (es. @ - ＠)
     v.chars().any(|c| ('\u{FF00}'..='\u{FFEF}').contains(&c))
 }
+
+/// 'true' se il contenuto è dichiarato come foglio di stile CSS
+pub fn is_css(declared: Option<&str>) -> bool {
+    if let Some(d) = declared.map(|d| d.split(';').next().unwrap_or("").trim().to_ascii_lowercase()) {
+        if d.to_ascii_lowercase().contains("css") {
+            return true;
+        }
+    }
+    false
+}

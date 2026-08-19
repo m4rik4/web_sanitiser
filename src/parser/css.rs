@@ -82,3 +82,24 @@ fn strip_import(css: &str) -> String {
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitise_css_removes_dangerous_constructs() {
+        let css = r#"
+            a { background: url("javascript:alert(1)"); }
+            div { width: expression(alert(1)); }
+            @import url("evil.css");
+        "#;
+
+        let (clean, actions) = sanitise_css(css);
+
+        assert!(!clean.to_ascii_lowercase().contains("javascript:"));
+        assert!(!clean.to_ascii_lowercase().contains("expression("));
+        assert!(!clean.to_ascii_lowercase().contains("@import"));
+        assert_eq!(actions.len(), 3);
+    }
+}

@@ -26,3 +26,32 @@ pub fn extract_links(html: &str) -> Vec<String> {
         .map(|c| c.into_inner())
         .unwrap_or_else(|rc| rc.borrow().clone())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn link_extraction() {
+        let html = r#"
+            <a href="https://example.com">link</a>
+            <img src="/image.png">
+            <form action="/submit">
+            <div data="/data"></div>
+            <video poster="/poster.jpg"></video>
+        "#;
+
+        let links = extract_links(html);
+
+        assert_eq!(
+            links,
+            vec![
+                "https://example.com",
+                "/image.png",
+                "/submit",
+                "/data",
+                "/poster.jpg",
+            ]
+        );
+    }
+}

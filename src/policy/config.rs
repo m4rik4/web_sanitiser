@@ -177,3 +177,64 @@ fn host_matches(host: &str, entry: &str) -> bool {
     let e = entry.to_ascii_lowercase();
     host == e || host.ends_with(&format!(".{e}"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_partial_config_keeps_the_other_defaults() {
+        // E' la promessa di #[serde(default)]: un file di configurazione parziale
+        // sovrascrive solo i campi presenti. Se qualcuno togliesse l'attributo,
+        // la deserializzazione fallirebbe invece di riempire i buchi.
+        let p: SanitiserPolicy = serde_json::from_str(r#"{"max_input_bytes": 42}"#).unwrap();
+        assert_eq!(p.max_input_bytes, 42);
+        assert_eq!(p.max_processing_ms, SanitiserPolicy::default().max_processing_ms);
+    }
+
+    #[test]
+    fn blocklist_matches_hosts_and_subdomains_only() {
+        let p = SanitiserPolicy::default();
+        assert!(p.is_host_blocked("malware.test"));
+        assert!(p.is_host_blocked("cdn.malware.test"));      // sottodominio
+        assert!(p.is_host_blocked("MALWARE.TEST"));          // maiuscole
+        assert!(p.is_host_blocked("ads.example"));           // anche la lista tracker
+        assert!(!p.is_host_blocked("notmalware.test"));      // suffisso senza il punto
+        assert!(!p.is_host_blocked("malware.test.evil.it")); // prefisso, non dominio
+    }
+
+    #[test]
+    fn only_absolute_allowlisted_sources_are_permitted() {
+        let mut p = SanitiserPolicy::default();
+        p.script_src_allowlist = vec!["cdn.fidato.test".into()];
+        p.iframe_src_allowlist = vec!["video.fidato.test".into()];
+
+        assert!(p.script_src_allowed(Some("https://cdn.fidato.test/app.js")));
+        assert!(!p.script_src_allowed(None));                              // inline mai
+        assert!(!p.script_src_allowed(Some("/locale/app.js")));            // relativo mai
+        assert!(!p.script_src_allowed(Some("//cdn.fidato.test/app.js")));  // protocol-relative
+        assert!(!p.script_src_allowed(Some("https://cdn.ostile.test/x.js")));
+
+        assert!(p.embed_src_allowed("https://video.fidato.test/v"));
+        assert!(!p.embed_src_allowed("/locale/v"));
+    }
+
+    #[test]
+    fn time_budget_respects_the_configured_limit() {
+        let mut policy = SanitiserPolicy::default();
+        let started = Instant::now();
+        std::thread::sleep(Duration::from_millis(10));
+
+        // 0 disattiva il controllo, anche se del tempo e' passato.
+        policy.max_processing_ms = 0;
+        assert!(!policy.time_budget_exceeded(started), "con 0 il controllo e' disattivato");
+
+        // Budget minimo: 10 ms trascorsi lo superano.
+        policy.max_processing_ms = 1;
+        assert!(policy.time_budget_exceeded(started));
+
+        // Budget ampio: 10 ms su 30 s non lo scalfiscono.
+        policy.max_processing_ms = 30_000;
+        assert!(!policy.time_budget_exceeded(started));
+    }
+}

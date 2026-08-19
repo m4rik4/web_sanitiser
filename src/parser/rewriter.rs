@@ -9,6 +9,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 /// potenziali problemi riscontrati sugli URL per memorizzarlo nell'azione tramite il valore originale dell'attributo
+#[derive(Debug, PartialEq)]
 enum UrlIssue {
     DangerousScheme,
     BlockedHost,
@@ -199,4 +200,21 @@ pub fn sanitise_html(html: &str, policy: &SanitiserPolicy) -> Result<(String, Ve
         .map(|c| c.into_inner())
         .unwrap_or_else(|rc| rc.borrow().clone()); // recupera il Vec direttamente se Rc è l'unico proprietario, altrimenti lo clona
     Ok((output, acts))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitise_html_removes_dangerous_url() {
+        let html = r#"<a href="javascript:alert(1)">link</a>"#;
+        let policy = SanitiserPolicy::default();
+
+        let (clean, actions) = sanitise_html(html, &policy).unwrap();
+
+        assert!(!clean.contains("javascript:"));
+        assert_eq!(actions.len(), 1);
+        assert_eq!(actions[0].rule, "neutralise-uri-scheme");
+    }
 }

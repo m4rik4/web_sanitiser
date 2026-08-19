@@ -339,3 +339,195 @@ pub fn is_css(declared: Option<&str>) -> bool {
     }
     false
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn alternate_ip_encodings_are_internal() {
+        // 2130706433 e 0x7f000001 sono entrambi 127.0.0.1
+        assert!(host_is_internal("2130706433"));
+        assert!(host_is_internal("0x7f000001"));
+        assert!(!host_is_internal("example.com"));
+    }
+
+    #[test]
+    fn declared_active_script_types_are_flagged() {
+        assert!(is_declared_active_script(Some("text/javascript")));
+        assert!(is_declared_active_script(Some("application/ecmascript")));
+        assert!(!is_declared_active_script(Some("text/plain")));
+        assert!(!is_declared_active_script(None));
+    }
+
+    #[test]
+    fn detects_xml_bomb() {
+        let bomb = r#"<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY lol "lol"><!ENTITY lol2 "&lol;&lol;&lol;">]><lolz>&lol2;&lol2;&lol2;</lolz>"#;
+        assert!(detect_xml_bomb(bomb.as_bytes(), 2));
+    }
+    
+    #[test]
+    fn detect_image_too_large() {
+        // immagine 1x1 valida
+        let png_1x1: &[u8] = &[
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x0D,
+            0x49, 0x48, 0x44, 0x52,
+            0x00, 0x00, 0x00, 0x01,
+            0x00, 0x00, 0x00, 0x01,
+            0x08, 0x02, 0x00, 0x00, 0x00,
+            0x90, 0x77, 0x53, 0xDE,
+            0x00, 0x00, 0x00, 0x0A,
+            0x49, 0x44, 0x41, 0x54,
+            0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0,
+            0x00, 0x00, 0x01, 0x01, 0x00, 0x18,
+            0xDD, 0x8D, 0xB4,
+            0x00, 0x00, 0x00, 0x00,
+            0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+        ];
+
+        // 1x1 = 1 pixel: non supera il limite
+        assert!(!image_too_large(png_1x1, 1));
+
+        // 1x1 = 1 pixel: supera il limite 0
+        assert!(image_too_large(png_1x1, 0));
+
+        // input non valido: blob_size restituisce Err -> false
+        let invalid = b"non e' un'immagine";
+        assert!(!image_too_large(invalid, 0));
+    }
+
+    #[test]
+    fn detects_pdf_active_content() {
+        // tutti i marker di contenuto attivo
+        assert!(pdf_has_active_content(b"%PDF-1.7 /JavaScript"));
+        assert!(pdf_has_active_content(b"%PDF-1.7 /JS"));
+        assert!(pdf_has_active_content(b"%PDF-1.7 /OpenAction"));
+        assert!(pdf_has_active_content(b"%PDF-1.7 /AA"));
+        assert!(pdf_has_active_content(b"%PDF-1.7 /Launch"));
+
+        // PDF senza contenuto attivo
+        assert!(!pdf_has_active_content(
+            b"%PDF-1.7 /Type /Catalog /Pages 2 0 R"
+        ));
+
+        // non-PDF, anche se contiene un marker
+        assert!(!pdf_has_active_content(b"hello /JavaScript"));
+    }
+
+    #[test]
+    fn test_sniff_mime() {
+        // immagini
+        assert_eq!(
+            sniff_mime(&[0x89, b'P', b'N', b'G', 0x00]),
+            Some("image/png")
+        );
+
+        assert_eq!(
+            sniff_mime(&[0xFF, 0xD8, 0xFF, 0x00]),
+            Some("image/jpeg")
+        );
+
+        assert_eq!(
+            sniff_mime(b"GIF87a"),
+            Some("image/gif")
+        );
+
+        assert_eq!(
+            sniff_mime(b"GIF89a"),
+            Some("image/gif")
+        );
+
+        assert_eq!(
+            sniff_mime(b"RIFF1234WEBP"),
+            Some("image/webp")
+        );
+
+        // documenti
+        assert_eq!(
+            sniff_mime(b"%PDF-1.7"),
+            Some("application/pdf")
+        );
+
+        // archivi
+        assert_eq!(
+            sniff_mime(&[0x50, 0x4B, 0x03, 0x04]),
+            Some("application/zip")
+        );
+
+        assert_eq!(
+            sniff_mime(&[0x1F, 0x8B, 0x08, 0x00]),
+            Some("application/gzip")
+        );
+
+        // HTML / XML
+        assert_eq!(
+            sniff_mime(b"<!DOCTYPE html><html>"),
+            Some("text/html")
+        );
+
+        assert_eq!(
+            sniff_mime(b"<HTML><body>"),
+            Some("text/html")
+        );
+
+        assert_eq!(
+            sniff_mime(b"<script>alert(1)</script>"),
+            Some("text/html")
+        );
+
+        assert_eq!(
+            sniff_mime(b"   <?xml version=\"1.0\"?>"),
+            Some("application/xml")
+        );
+
+        assert_eq!(
+            sniff_mime(b"<!DOCTYPE svg>"),
+            Some("application/xml")
+        );
+
+        // input troppo corto
+        assert_eq!(sniff_mime(&[0x01, 0x02, 0x03]), None);
+
+        // formato non riconosciuto
+        assert_eq!(sniff_mime(b"ciao mondo"), None);
+    }
+
+    #[test]
+    fn detects_mime_mismatch() {
+        assert!(mime_mismatch(Some("image/png"), Some("text/html")));
+        assert!(!mime_mismatch(Some("text/html"), Some("text/html")));
+    }
+
+    #[test]
+    fn html_detection() {
+        assert!(is_html(None, Some("text/html")));
+        assert!(!is_html(Some("text/html"), Some("application/pdf")));
+        assert!(is_html(Some("text/html"), None));
+        assert!(!is_html(Some("image/png"), None));
+        assert!(!is_html(None, None));
+    }
+
+    #[test]
+    fn punycode_detection() {
+        assert!(host_is_punycode("xn--caf-dma.com"));
+        assert!(host_is_punycode("www.xn--caf-dma.com"));
+        assert!(!host_is_punycode("example.com"));
+    }
+
+    #[test]
+    fn host_confusion_is_detected() {
+        assert!(url_has_host_confusion(r"https://example.com\@127.0.0.1/"));
+        assert!(url_has_host_confusion("https://\u{FF45}xample.com/")); // 'e' fullwidth
+        assert!(!url_has_host_confusion("https://example.com/path"));
+    }
+
+    #[test]
+    fn css_detection() {
+        assert!(is_css(Some("text/css")));
+        assert!(is_css(Some("text/css; charset=utf-8")));
+        assert!(!is_css(Some("text/html")));
+        assert!(!is_css(None));
+    }
+
+}

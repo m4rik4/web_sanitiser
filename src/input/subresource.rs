@@ -166,3 +166,25 @@ fn absolute_links(base: &Url, html: &str) -> Vec<String> {
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn resolves_references_against_the_base() {
+        let base = Url::parse("http://sito.test/pagina/index.html").unwrap();
+        let out = absolute_links(&base, r#"<link href="stile.css"><img src="/logo.png">"#);
+        assert!(out.contains(&"http://sito.test/pagina/stile.css".to_string()));
+        assert!(out.contains(&"http://sito.test/logo.png".to_string()));
+    }
+
+    #[test]
+    fn drops_what_must_not_be_fetched() {
+        let base = Url::parse("http://sito.test/pagina/index.html").unwrap();
+        let out = absolute_links(&base, r##"<a href="javascript:alert(1)">a</a>
+            <a href="mailto:tizio@esempio.test">b</a>
+            <a href="#blocked-ssrf">c</a>
+            <a href="ftp://sito.test/f">d</a>"##);
+        assert!(out.is_empty(), "{out:?}");
+    }
+}

@@ -129,3 +129,25 @@ pub async fn fetch(
 
     Ok((bytes, declared_mime))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn blocks_loopback() {
+        let p = SanitiserPolicy::default();
+        let u = Url::parse("http://127.0.0.1/").unwrap();
+        assert!(matches!(ssrf_guard(&u, &p), Err(SanitiserError::SsrfBlocked(_))));
+    }
+
+    #[test]
+    fn loopback_hosts_are_recognised_without_false_positives() {
+        for h in ["localhost", "LOCALHOST", "dev.localhost", "127.0.0.1", "127.0.0.2", "[::1]"] {
+            assert!(is_loopback_host(h), "{h}");
+        }
+        for h in ["localhost.evil.test", "notlocalhost", "esempio.test", "8.8.8.8"] {
+            assert!(!is_loopback_host(h), "{h}");
+        }
+    }
+}

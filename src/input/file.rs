@@ -47,3 +47,42 @@ pub fn expand_dir(root: &Path) -> Result<Vec<PathBuf>> {
     }
     Ok(out)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extension_decides_the_declared_mime() {
+        for (name, expected) in [
+            ("a.html", Some("text/html")),
+            ("a.HTM", Some("text/html")),  // maiuscole comprese
+            ("a.JPG", Some("image/jpeg")),
+            ("a.css", Some("text/css")),
+            ("a.tar.gz", None),            // conta solo l'ultima estensione
+            ("LEGGIMI", None),             // nessuna estensione
+        ] {
+            assert_eq!(mime_from_extension(Path::new(name)).as_deref(), expected, "{name}");
+        }
+    }
+
+    #[test]
+    fn read_file_reads_the_bytes_and_declares_from_the_name() {
+        let (bytes, declared) = read_file(Path::new("corpus/benign/simple.html")).unwrap();
+        assert!(!bytes.is_empty());
+        assert_eq!(declared.as_deref(), Some("text/html"));
+    }
+
+    #[test]
+    fn descends_into_subdirectories() {
+        let files = expand_dir(Path::new("corpus")).unwrap();
+        assert!(files.iter().all(|p| p.is_file()));           // mai le directory
+        assert!(files.iter().any(|p| p.ends_with("benign/simple.html")));
+        assert!(files.iter().any(|p| p.ends_with("malicious/ssrf-internal.html")));
+    }
+
+    #[test]
+    fn a_missing_directory_is_an_error() {
+        assert!(expand_dir(Path::new("corpus/non-esiste")).is_err());
+    }
+}

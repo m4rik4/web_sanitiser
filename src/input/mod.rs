@@ -36,3 +36,16 @@ pub fn classify_arg(arg: &str) -> Source {
         Source::File(PathBuf::from(arg))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn urls_are_recognised_by_scheme_everything_else_is_a_file() {
+        assert!(matches!(classify_arg("http://esempio.test/a"), Source::Url(_)));
+        assert!(matches!(classify_arg("https://esempio.test/a"), Source::Url(_)));
+        assert!(matches!(classify_arg(r"C:\Users\tizio\pagina.html"), Source::File(_)));
+        assert!(matches!(classify_arg("./corpus/benign/simple.html"), Source::File(_)));
+    }
+}

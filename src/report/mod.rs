@@ -72,7 +72,8 @@ pub struct JobReport {
     /// byte prodotti in uscita, zero se non è stato prodotto nulla
     pub bytes_out: usize,
 
-    /// le modifiche applicate, vuoto se non c'era niente da togliere
+    /// tutto ciò che è stato rimosso, sostituito o segnalato, vuoto quando non c'era
+    /// niente da fare
     pub actions: Vec<Action>,
 
     // i due campi qui sotto si escludono a vicenda e spariscono dal json quando
@@ -80,7 +81,8 @@ pub struct JobReport {
     /// perché l'input è stato respinto, presente solo con `JobStatus::Refused`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refusal_reason: Option<String>,
-    /// cosa è andato storto, presente solo con `JobStatus::Error`
+    /// cosa è andato storto: sempre presente con `JobStatus::Error`, oppure su un job
+    /// riuscito quando la scrittura dell'output è fallita
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
 }
@@ -135,6 +137,15 @@ impl JobReport {
             error: Some(error.into()),
         }
     }
+
+    /// aggiunge un errore a un job riuscito, come una scrittura dell'output fallita;
+    /// un `None` non cancella un errore già presente
+    pub fn with_error(mut self, error: Option<String>) -> Self {
+        if error.is_some() {
+            self.error = error;
+        }
+        self
+    }
 }
 
 /// quante modifiche ha richiesto un singolo input
@@ -153,7 +164,7 @@ pub struct Report {
     pub errors: usize,
     pub total_actions: usize,
 
-    /// quante modifiche per ciascun input
+    /// quante modifiche per input, esclusi quelli che non ne hanno richieste
     pub actions_by_input: Vec<InputActionCount>,
     /// il dettaglio completo, un elemento per input
     pub jobs: Vec<JobReport>,

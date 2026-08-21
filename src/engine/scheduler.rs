@@ -4,7 +4,7 @@ use crate::engine::{worker, Statistics, WorkerContext};
 use crate::error::{Result, SanitiserError};
 use crate::input::{network, Source};
 use crate::policy::SanitiserPolicy;
-use crate::report::{JobReport, Report};
+use crate::report::{InputActionCount, JobReport, Report};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
@@ -88,15 +88,29 @@ pub fn run_sanitisation_pipeline(
         jobs.push(report);
     }
 
-    // prima si svuota il canale, poi si aspettano i thread; invertendo i due passi
-    // i worker resterebbero bloccati su un `send` che nessuno legge
+    // il ciclo su `rx` finisce quando l'ultimo worker chiude il suo mittente,
+    // quindi qui i thread hanno già terminato e la join non aspetta niente
     for h in handles {
         let _ = h.join();
     }
 
-    // DA COMPLETARE: l'aggregato si ricava dai `jobs`, dove ogni input compare
-    // una volta sola; ordine per azioni decrescenti, a parità per nome
-    let actions_by_input = Vec::new();
+    // gli input a zero azioni restano fuori, il loro esito è già nei `jobs`; per gli
+    // altri il numero si legge da un job solo, perché ogni input ne produce uno
+    let actions_by_input = {
+        let mut v: Vec<InputActionCount> = jobs
+            .iter()
+            .filter(|j| !j.actions.is_empty())
+            .map(|j| InputActionCount {
+                input: j.input.clone(),
+                actions: j.actions.len() as u64,
+            })
+            .collect();
+
+        // in testa chi ha più azioni, a parità in ordine alfabetico, altrimenti la
+        // posizione dipenderebbe da quale worker ha finito prima
+        v.sort_by(|a, b| b.actions.cmp(&a.actions).then_with(|| a.input.cmp(&b.input)));
+        v
+    };
 
     Ok(Report::assemble(
         jobs,

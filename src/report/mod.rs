@@ -192,24 +192,6 @@ impl Report {
         }
     }
 
-    /// ricava i conteggi direttamente dai singoli esiti; comodo quando il report
-    /// va costruito senza passare dalla pipeline
-    pub fn from_jobs(jobs: Vec<JobReport>) -> Self {
-        let sanitised = jobs.iter().filter(|j| j.status == JobStatus::Sanitised).count();
-        let refused = jobs.iter().filter(|j| j.status == JobStatus::Refused).count();
-        let errors = jobs.iter().filter(|j| j.status == JobStatus::Error).count();
-        let total_actions = jobs.iter().map(|j| j.actions.len()).sum();
-        Report {
-            total_inputs: jobs.len(),
-            sanitised,
-            refused,
-            errors,
-            total_actions,
-            actions_by_input: Vec::new(),
-            jobs,
-        }
-    }
-
     /// vero se almeno un input è stato respinto; è quello che fa uscire la cli
     /// con un codice diverso da zero
     pub fn any_refused(&self) -> bool {

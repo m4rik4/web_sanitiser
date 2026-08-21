@@ -22,8 +22,8 @@ use std::sync::Arc;
 ///
 /// l'immutabilità è il criterio con cui questa struct è stata separata dal resto:
 /// coda, canale e statistiche cambiano di continuo e restano fuori; qui invece
-/// non scrive nessuno, quindi ogni worker se ne tiene una copia senza lock, e la
-/// copia condivide i dati invece di duplicarli
+/// non scrive nessuno, quindi ogni worker se ne tiene una copia senza lock; copiarla
+/// costa poco, perché i campi pesanti vengono condivisi invece che duplicati
 #[derive(Clone)]
 pub struct WorkerContext {
     pub policy: Arc<SanitiserPolicy>,

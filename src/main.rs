@@ -19,6 +19,7 @@ use std::sync::Arc;
 use clap::Parser;
 use web_sanitiser::{run_sanitisation_pipeline, SanitiserPolicy};
 use web_sanitiser::input::{classify_arg, file, Source};
+use web_sanitiser::report::json_emitter;
 
 /// argomenti della riga di comando; i doc-comment dei campi diventano il testo
 /// che l'utente legge con `--help`
@@ -71,7 +72,7 @@ fn main() -> ExitCode {
         }
     };
 
-    println!("{:?}", policy); // DA RIMUOVERE
+    eprintln!("\n{:?}", policy); // DA RIMUOVERE
 
     // 2. set-up degli input: le directory trasformate in liste di file
     let mut sources: Vec<Source> = Vec::new();
@@ -85,7 +86,7 @@ fn main() -> ExitCode {
         }
     }
     if sources.is_empty() {
-        eprintln!("Nessun input valido fornito.");
+        eprintln!("Nessun input valido fornito");
         return ExitCode::from(2);
     }
 
@@ -95,10 +96,10 @@ fn main() -> ExitCode {
         args.threads
     };
     if args.verbose {
-        eprintln!("Sanitizzo {} input con {} thread", sources.len(), threads);
+        eprintln!("\nSanitizzo {} input con {} thread", sources.len(), threads);
     }
 
-    println!("{:?}", sources); // DA RIMUOVERE
+    eprintln!("\n{:?}", sources); // DA RIMUOVERE
 
     // 3. esecuzione della pipeline concorrente; per la libreria `out_dir` è opzionale, la cli invece passa sempre un valore
     let report = match run_sanitisation_pipeline(sources, policy, threads, Some(args.out_dir)) {
@@ -109,7 +110,36 @@ fn main() -> ExitCode {
         }
     };
 
-    println!("{:?}", report); // DA RIMUOVERE
+    eprintln!("\n{:?}", report); // DA RIMUOVERE
 
-    ExitCode::SUCCESS
+    // 4. emissione del report json
+    match &args.report {
+        Some(path) => {
+            if let Err(e) = json_emitter::write_to_file(&report, path) {
+                eprintln!("Impossibile scrivere il report: {e}");
+                return ExitCode::from(2);
+            }
+        }
+        None => match json_emitter::to_json_string(&report) {
+            Ok(s) => println!("{s}"),
+            Err(e) => {
+                eprintln!("Errore di serializzazione del report: {e}");
+                return ExitCode::from(2);
+            }
+        },
+    }
+
+    if args.verbose {
+        eprintln!(
+            "\nFatto: {} sanitizzati, {} rifiutati, {} errori, {} azioni totali",
+            report.sanitised, report.refused, report.errors, report.total_actions
+        );
+    }
+
+    // 5. exit code
+    if report.any_refused() {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }

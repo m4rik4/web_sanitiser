@@ -198,3 +198,56 @@ impl Report {
         self.refused > 0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_constructor_sets_its_status_and_zeroes_the_rest() {
+        let s = JobReport::sanitised("a.html".into(), "file", 100, 80, vec![]);
+        assert_eq!(s.status, JobStatus::Sanitised);
+        assert_eq!(s.bytes_out, 80);
+
+        let r = JobReport::refused("a.html".into(), "file", 100, "supera max_input_bytes");
+        assert_eq!(r.status, JobStatus::Refused);
+        assert_eq!(r.bytes_out, 0); // un rifiuto non produce output
+        assert_eq!(r.refusal_reason.as_deref(), Some("supera max_input_bytes"));
+
+        let e = JobReport::errored("a.html".into(), "file", "lettura fallita");
+        assert_eq!(e.status, JobStatus::Error);
+        assert_eq!(e.bytes_in, 0); // una lavorazione fallita non ha misure da riportare
+    }
+
+    #[test]
+    fn a_none_does_not_erase_an_error_already_set() {
+        let job = JobReport::sanitised("a.html".into(), "file", 10, 10, vec![])
+            .with_error(Some("output non scritto".into()))
+            .with_error(None);
+        assert_eq!(job.error.as_deref(), Some("output non scritto"));
+        assert_eq!(job.status, JobStatus::Sanitised); // l'errore a valle non declassa il job
+    }
+
+    #[test]
+    fn empty_optional_fields_stay_out_of_the_json() {
+        // la promessa è dello `#[serde(skip_serializing_if)]`, che si può togliere
+        // per sbaglio senza che niente si rompa a compilazione
+        let json = serde_json::to_string(&JobReport::sanitised(
+            "a.html".into(), "file", 10, 10, vec![],
+        )).unwrap();
+        assert!(!json.contains("\"refusal_reason\""));
+        assert!(!json.contains("\"error\""));
+        assert!(json.contains("\"status\":\"sanitised\""));
+    }
+
+    #[test]
+    fn assemble_counts_the_inputs_from_the_jobs() {
+        let jobs = vec![
+            JobReport::sanitised("a.html".into(), "file", 1, 1, vec![]),
+            JobReport::refused("b.html".into(), "file", 1, "tipo attivo dichiarato"),
+        ];
+        let report = Report::assemble(jobs, 1, 1, 0, 0, vec![]);
+        assert_eq!(report.total_inputs, 2); // l'unico conteggio che `assemble` non riceve da fuori
+        assert!(report.any_refused());
+    }
+}

@@ -61,3 +61,35 @@ impl Statistics {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::report::Action;
+
+    #[test]
+    fn each_status_increments_its_own_counter() {
+        let stats = Statistics::default();
+        stats.record(&JobReport::sanitised("a.html".into(), "file", 1, 1, vec![]));
+        stats.record(&JobReport::refused("b.html".into(), "file", 1, "PDF con contenuto attivo"));
+        stats.record(&JobReport::errored("c.html".into(), "file", "lettura fallita"));
+
+        assert_eq!(stats.sanitised.load(Ordering::Relaxed), 1);
+        assert_eq!(stats.refused.load(Ordering::Relaxed), 1);
+        assert_eq!(stats.errors.load(Ordering::Relaxed), 1);
+    }
+
+    #[test]
+    fn actions_are_summed_across_jobs() {
+        let stats = Statistics::default();
+        let due = vec![
+            Action::new("remove-script", "<script>", "inline", ""),
+            Action::new("mime-mismatch", "content-type", "text/plain", "text/html"),
+        ];
+        stats.record(&JobReport::sanitised("a.html".into(), "file", 1, 1, due));
+        stats.record(&JobReport::refused("b.html".into(), "file", 1, "sospetto XML bomb"));
+
+        // il contatore cresce con le azioni di ogni job, qualunque sia il suo esito
+        assert_eq!(stats.actions.load(Ordering::Relaxed), 2);
+    }
+}

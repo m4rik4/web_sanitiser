@@ -52,7 +52,7 @@ fn build_redirect_policy(policy: &SanitiserPolicy) -> reqwest::redirect::Policy 
     let allowlist = policy.fetch_host_allowlist.clone();
 
     reqwest::redirect::Policy::custom(move |attempt| { // il parametro attempt verra fornito da reqwest in occasione di redirect 
-        if attempt.previous().len() >= max {
+        if attempt.previous().len() > max {
             return attempt.error(format!("troppi redirect (> {max})")); // interruzione del redirect, Reqwest convertirà questa decisione in un reqwest::Error, che verrà restituito dalla successiva client.get(...).send()
         }
         if block_private {

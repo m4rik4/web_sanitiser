@@ -1,0 +1,183 @@
+{
+  "description": "Ground truth etichettata dagli autori per la valutazione (traccia sez. 7). Le etichette NON sono usate dal tool a runtime: ogni input e' trattato come non fidato. 'expected_status' e' l'esito atteso sotto la policy di default; 'expected_rules' elenca le regole che devono comparire tra le azioni.",
+  "entries": [
+    {
+      "path": "benign/simple.html",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": []
+    },
+    {
+      "path": "benign/tricky-but-legit.html",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": [],
+      "note": "Sotto policy default il data:image genera 'neutralise-uri-scheme' (potenziale falso positivo). Benigno con allow_data_uri=true."
+    },
+    {
+      "path": "benign/article.html",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": []
+    },
+    {
+      "path": "benign/form-legit.html",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": []
+    },
+    {
+      "path": "benign/styles-inline.html",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": []
+    },
+    {
+      "path": "benign/unicode-legit.html",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": []
+    },
+    {
+      "path": "benign/benign.css",
+      "label": "benign",
+      "expected_status": "sanitised",
+      "expected_rules": []
+    },
+    {
+      "path": "malicious/xss-script-tag.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "remove-script"
+      ]
+    },
+    {
+      "path": "malicious/inline-handler.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "strip-inline-handler"
+      ]
+    },
+    {
+      "path": "malicious/js-uri.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "neutralise-uri-scheme"
+      ]
+    },
+    {
+      "path": "malicious/meta-refresh.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "remove-meta-refresh"
+      ]
+    },
+    {
+      "path": "malicious/ssrf-internal.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "block-ssrf-reference"
+      ]
+    },
+    {
+      "path": "malicious/data-uri.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "neutralise-uri-scheme"
+      ]
+    },
+    {
+      "path": "malicious/object-embed.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "block-listed-host",
+        "neutralise-uri-scheme",
+        "remove-active-embed"
+      ]
+    },
+    {
+      "path": "malicious/iframe-embed.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "block-listed-host",
+        "remove-active-embed"
+      ]
+    },
+    {
+      "path": "malicious/idn-homograph.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "flag-idn-homograph"
+      ]
+    },
+    {
+      "path": "malicious/host-split.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "flag-host-split"
+      ]
+    },
+    {
+      "path": "malicious/ip-decimal-ssrf.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "block-ssrf-reference"
+      ]
+    },
+    {
+      "path": "malicious/css-malicious.css",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "neutralise-css-url",
+        "remove-css-expression",
+        "remove-css-import"
+      ]
+    },
+    {
+      "path": "malicious/active-script.js",
+      "label": "malicious",
+      "expected_status": "refused",
+      "expected_rules": []
+    },
+    {
+      "path": "malicious/xml-bomb.xml",
+      "label": "malicious",
+      "expected_status": "refused",
+      "expected_rules": []
+    },
+    {
+      "path": "malicious/huge-image.png",
+      "label": "malicious",
+      "expected_status": "refused",
+      "expected_rules": []
+    },
+    {
+      "path": "malicious/scripted-pdf.pdf",
+      "label": "malicious",
+      "expected_status": "refused",
+      "expected_rules": []
+    },
+    {
+      "path": "malicious/relative-active-content.html",
+      "label": "malicious",
+      "expected_status": "sanitised",
+      "expected_rules": [
+        "remove-script",
+        "remove-active-embed"
+      ],
+      "note": "src relativi e protocol-relative: l'origine del documento e' essa stessa non fidata, quindi non compaiono in alcuna allow-list."
+    }
+  ]
+}

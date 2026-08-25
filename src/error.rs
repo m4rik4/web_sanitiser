@@ -57,8 +57,7 @@ impl std::error::Error for SanitiserError {
     }
 }
 
-// conversioni automatiche: grazie a queste si può usare `?` sugli errori delle
-// librerie esterne, senza mapparli a mano ogni volta
+// conversioni automatiche: grazie a queste si può usare `?` sugli errori delle librerie esterne, senza mapparli a mano ogni volta
 impl From<std::io::Error> for SanitiserError {
     fn from(e: std::io::Error) -> Self {
         SanitiserError::Io(e)
@@ -74,8 +73,20 @@ impl From<url::ParseError> for SanitiserError {
         SanitiserError::InvalidUrl(e.to_string())
     }
 }
+/// classifica gli errori di rete secondo la causa
 impl From<reqwest::Error> for SanitiserError {
     fn from(e: reqwest::Error) -> Self {
-        SanitiserError::Fetch(e.to_string())
+        if e.is_decode() {
+            // stream compresso malformato o troncato: contenuto non ispezionabile.
+            SanitiserError::Refused(format!("corpo della risposta non decodificabile: {e}"))
+        } else if e.is_timeout() {
+            // il timeout è un budget dichiarato dalla policy: trattalo come tale.
+            SanitiserError::BudgetExceeded(format!("timeout della richiesta: {e}"))
+        } else if e.is_redirect() {
+            SanitiserError::Refused(format!("redirect rifiutato: {e}"))
+        } 
+        else {
+            SanitiserError::Fetch(e.to_string())
+        }
     }
 }

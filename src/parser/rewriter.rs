@@ -36,7 +36,8 @@ fn analyse_url(val: &str, policy: &SanitiserPolicy) -> Option<UrlIssue> {
             if policy.is_host_blocked(h) {
                 return Some(UrlIssue::BlockedHost);
             }
-            if host_is_internal(h) {
+            let fetch_allowed = policy.fetch_host_allowlist.iter().any(|a| a == h);
+            if !fetch_allowed && host_is_internal(h) {
                 return Some(UrlIssue::InternalHost);
             }
             if host_is_punycode(h) {

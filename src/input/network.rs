@@ -7,8 +7,8 @@ use std::net::{IpAddr, ToSocketAddrs};
 use std::time::Duration;
 use url::Url;
 
-/// guard SSRF: risolve l'host e rifiuta destinazioni interne/private, salvo host
-/// esplicitamente in allow-list o loopback consentito
+/// guard SSRF: risolve l'host e rifiuta destinazioni interne/private, salvo host esplicitamente in allow-list o loopback consentito
+// da non confondere con la redirect_policy, per quanto parzialmente simile, che controlla invece le destinazioni dei redirect successivi
 pub fn ssrf_guard(parsed: &Url, policy: &SanitiserPolicy) -> Result<()> {
     let host = parsed
         .host_str()
@@ -56,14 +56,13 @@ fn build_redirect_policy(policy: &SanitiserPolicy) -> reqwest::redirect::Policy 
             return attempt.error(format!("troppi redirect (> {max})")); // interruzione del redirect, Reqwest convertirà questa decisione in un reqwest::Error, che verrà restituito dalla successiva client.get(...).send()
         }
         if block_private {
-            // copiamo l'host in una String per non trattenere il borrow di attempt
-            // quando poi lo consumiamo con .error() / .follow()
+            // copiamo l'host in una String per non trattenere il borrow di attempt quando poi lo consumiamo con .error() / .follow()
             let host = attempt.url().host_str().map(|h| h.to_string()); // map di option diverso da quello di da map di iterator, se è None non fa nulla
             if let Some(host) = host {
                 let allowed = allowlist.iter().any(|h| h == &host); 
                 if !allowed                                                 // se non è in allowlist 
                     && host_is_internal(host.as_str())                      // se è interno/privato 
-                    && !(is_loopback_host(host.as_str()) && allow_loopback) // se non è un loopback esplicitamente autorizzato dalla policy
+                    && !(allow_loopback && is_loopback_host(host.as_str())) // se non è un loopback esplicitamente autorizzato dalla policy
                 {
                     return attempt
                         .error(format!("redirect verso host interno bloccato (SSRF): {host}"));

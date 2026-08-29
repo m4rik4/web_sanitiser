@@ -43,9 +43,8 @@ pub fn run(
     }
 }
 
-/// traduce un errore di caricamento nell'esito del job: quando è la policy a dire
-/// no il job è `Refused`, quando invece non siamo riusciti a leggere l'input è
-/// `Error`
+/// traduce un errore di caricamento nell'esito del job: se abbiamo deciso noi di
+/// non elaborarlo il job è `Refused`, se invece non ci siamo riusciti è `Error`
 ///
 /// serve a uniformare le due sorgenti: un input oversize preso dalla rete deve
 /// essere rifiutato come un file oversize letto dal disco

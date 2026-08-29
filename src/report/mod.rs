@@ -48,8 +48,8 @@ pub enum JobStatus {
     /// ripulito, con o senza modifiche applicate; se tutti gli input finiscono
     /// così la cli esce con `0`
     Sanitised,
-    /// respinto in blocco perché sfora un limite o lo vieta la policy; ne basta
-    /// uno per far uscire la cli con `1`
+    /// respinto in blocco: sfora un limite, lo vieta la policy, oppure non è
+    /// ispezionabile; ne basta uno per far uscire la cli con `1`
     Refused,
     /// non è stato possibile elaborarlo, ad esempio per un errore di lettura;
     /// non tocca l'exit code, un input fallito non fa fallire l'intera esecuzione

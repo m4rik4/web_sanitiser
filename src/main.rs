@@ -72,8 +72,6 @@ fn main() -> ExitCode {
         }
     };
 
-    eprintln!("\n{:?}", policy); // DA RIMUOVERE
-
     // 2. set-up degli input: le directory trasformate in liste di file
     let mut sources: Vec<Source> = Vec::new();
     for arg in &args.inputs {
@@ -99,8 +97,6 @@ fn main() -> ExitCode {
         eprintln!("\nSanitizzo {} input con {} thread", sources.len(), threads);
     }
 
-    eprintln!("\n{:?}", sources); // DA RIMUOVERE
-
     // 3. esecuzione della pipeline concorrente; per la libreria `out_dir` è opzionale, la cli invece passa sempre un valore
     let report = match run_sanitisation_pipeline(sources, policy, threads, Some(args.out_dir)) {
         Ok(r) => r,
@@ -109,8 +105,6 @@ fn main() -> ExitCode {
             return ExitCode::from(2);
         }
     };
-
-    eprintln!("\n{:?}", report); // DA RIMUOVERE
 
     // 4. emissione del report json
     match &args.report {

@@ -182,9 +182,9 @@ pub fn process_one(src: &Source, ctx: &WorkerContext, rt: &Handle) -> JobReport 
 
     // 1. caricamento: il file dal disco, l'url dal runtime async
     let (bytes, declared_mime) = match src {
-        Source::File(path) => match file::read_file(path) {
+        Source::File(path) => match file::read_file(path, policy.max_input_bytes) {
             Ok(loaded) => loaded,
-            Err(e) => return JobReport::errored(label, kind, e.to_string()),
+            Err(e) => return fetch_error_report(label, kind, e),
         },
         Source::Url(url) => match rt.block_on(network::fetch(client, url, policy)) {
             Ok(loaded) => loaded,
@@ -195,6 +195,7 @@ pub fn process_one(src: &Source, ctx: &WorkerContext, rt: &Handle) -> JobReport 
 
     // 2. budget di dimensione, difesa dos (traccia sez. 4); viene prima delle
     //    regole sul contenuto perché costa un confronto invece di una scansione
+    //    rete e file applicano già il tetto prima di allocare, questo resta per sicurezza
     if bytes_in > policy.max_input_bytes {
         return JobReport::refused(label, kind, bytes_in, "supera max_input_bytes");
     }

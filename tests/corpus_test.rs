@@ -3,10 +3,7 @@
 
 use std::path::PathBuf;
 use std::sync::Arc;
-use web_sanitiser::Source;
-use web_sanitiser::SanitiserPolicy;
-use web_sanitiser::JobStatus;
-use web_sanitiser::run_sanitisation_pipeline;
+use web_sanitiser::{Source, SanitiserPolicy, JobStatus, run_sanitisation_pipeline};
 
 fn corpus_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("corpus")

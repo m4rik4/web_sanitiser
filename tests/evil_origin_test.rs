@@ -5,10 +5,7 @@
 use std::net::TcpStream;
 use std::sync::Arc;
 use std::time::Duration;
-use web_sanitiser::Source;
-use web_sanitiser::SanitiserPolicy;
-use web_sanitiser::JobStatus;
-use web_sanitiser::run_sanitisation_pipeline;
+use web_sanitiser::{Source, SanitiserPolicy, JobStatus, run_sanitisation_pipeline};
 
 use std::path::PathBuf;
 

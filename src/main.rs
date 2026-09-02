@@ -18,8 +18,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use clap::Parser;
 use web_sanitiser::{run_sanitisation_pipeline, SanitiserPolicy};
-use web_sanitiser::input::{classify_arg, file, Source};
-use web_sanitiser::report::json_emitter;
+use web_sanitiser::{classify_arg, file, Source};
+use web_sanitiser::json_emitter;
 
 /// argomenti della riga di comando; i doc-comment dei campi diventano il testo
 /// che l'utente legge con `--help`

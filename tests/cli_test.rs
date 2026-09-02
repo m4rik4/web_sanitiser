@@ -6,10 +6,7 @@
 
 use std::path::PathBuf;
 use std::sync::Arc;
-use web_sanitiser::input::Source;
-use web_sanitiser::policy::SanitiserPolicy;
-use web_sanitiser::report::{JobReport, JobStatus};
-use web_sanitiser::run_sanitisation_pipeline;
+use web_sanitiser::{Source, SanitiserPolicy, JobReport, JobStatus, run_sanitisation_pipeline};
 
 /// esegue la pipeline su un file del corpus e restituisce il report del job
 ///

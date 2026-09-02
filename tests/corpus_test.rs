@@ -3,9 +3,9 @@
 
 use std::path::PathBuf;
 use std::sync::Arc;
-use web_sanitiser::input::Source;
-use web_sanitiser::policy::SanitiserPolicy;
-use web_sanitiser::report::JobStatus;
+use web_sanitiser::Source;
+use web_sanitiser::SanitiserPolicy;
+use web_sanitiser::JobStatus;
 use web_sanitiser::run_sanitisation_pipeline;
 
 fn corpus_root() -> PathBuf {

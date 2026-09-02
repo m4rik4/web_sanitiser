@@ -20,7 +20,9 @@ pub mod parser;
 
 // api principali: si usano come web_sanitiser::Nome, senza passare dal modulo
 // che le contiene
-pub use error::{Result, SanitiserError};
-pub use report::{Action, JobReport, JobStatus, Report};
+
 pub use policy::SanitiserPolicy;
 pub use engine::scheduler::run_sanitisation_pipeline;
+pub use input::{classify_arg, file, Source};
+
+pub use report::{json_emitter, JobReport, JobStatus};

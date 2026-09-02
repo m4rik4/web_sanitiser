@@ -25,7 +25,7 @@ use std::sync::Arc;
 /// non scrive nessuno, quindi ogni worker se ne tiene una copia senza lock; copiarla
 /// costa poco, perché i campi pesanti vengono condivisi invece che duplicati
 #[derive(Clone)]
-pub struct WorkerContext {
+struct WorkerContext {
     pub policy: Arc<SanitiserPolicy>,
     pub client: reqwest::Client, // un solo pool di connessioni per tutta l'esecuzione
     pub ambiguous_names: Arc<HashSet<String>>, // nomi base che compaiono su più input e vanno distinti in uscita
@@ -34,7 +34,7 @@ pub struct WorkerContext {
 
 /// contatori globali dell'esecuzione, aggiornati da tutti i worker senza mutex
 #[derive(Default)]
-pub struct Statistics {
+struct Statistics {
     pub sanitised: AtomicU64,
     pub refused: AtomicU64,
     pub errors: AtomicU64,

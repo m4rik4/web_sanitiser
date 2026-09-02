@@ -1,10 +1,18 @@
 //! lettura dal file system e ricerca ricorsiva nella directory
 
 use std::path::{Path, PathBuf};
-use crate::error::Result;
+use crate::error::{Result, SanitiserError};
 
 /// legge un file, ricavando il MIME dichiarato dall'estensione (non affidabile)
-pub fn read_file(path: &Path) -> Result<(Vec<u8>, Option<String>)> {
+// dimensione verificata sui metadati per non allocare il contenuto
+pub fn read_file(path: &Path, max_bytes: usize) -> Result<(Vec<u8>, Option<String>)> {
+    let dimensione = std::fs::metadata(path)?.len();
+    if dimensione > max_bytes as u64 {
+        return Err(SanitiserError::BudgetExceeded(format!(
+            "{}: {dimensione} byte, oltre max_input_bytes ({max_bytes})",
+            path.display()
+        )));
+    }
     let bytes = std::fs::read(path)?;
     Ok((bytes, mime_from_extension(path)))
 }
@@ -68,7 +76,7 @@ mod tests {
 
     #[test]
     fn read_file_reads_the_bytes_and_declares_from_the_name() {
-        let (bytes, declared) = read_file(Path::new("corpus/benign/simple.html")).unwrap();
+        let (bytes, declared) = read_file(Path::new("corpus/benign/simple.html"), 10 * 1024 * 1024).unwrap();
         assert!(!bytes.is_empty());
         assert_eq!(declared.as_deref(), Some("text/html"));
     }

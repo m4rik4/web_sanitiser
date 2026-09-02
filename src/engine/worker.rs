@@ -193,9 +193,9 @@ pub fn process_one(src: &Source, ctx: &WorkerContext, rt: &Handle) -> JobReport 
     };
     let bytes_in = bytes.len();
 
-    // 2. budget di dimensione, difesa dos (traccia sez. 4); viene prima delle
-    //    regole sul contenuto perché costa un confronto invece di una scansione
-    //    rete e file applicano già il tetto prima di allocare, questo resta per sicurezza
+    // 2. budget di dimensione, difesa dos (traccia sez. 4); il tetto lo applicano
+    //    già la lettura da disco e quella da rete, quindi qui è solo un secondo
+    //    controllo, che costa un confronto
     if bytes_in > policy.max_input_bytes {
         return JobReport::refused(label, kind, bytes_in, "supera max_input_bytes");
     }

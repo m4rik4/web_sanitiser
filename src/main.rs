@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use clap::Parser;
-use web_sanitiser::{run_sanitisation_pipeline, SanitiserPolicy, classify_arg, file, Source, json_emitter};
+use web_sanitiser::{classify_arg, file, json_emitter, run_sanitisation_pipeline, SanitiserPolicy, Source};
 
 /// argomenti della riga di comando; i doc-comment dei campi diventano il testo
 /// che l'utente legge con `--help`

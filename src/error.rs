@@ -18,15 +18,15 @@ pub enum SanitiserError {
     Io(std::io::Error),
     /// url malformato o non interpretabile
     InvalidUrl(String),
-    /// lo scaricamento da rete non è riuscito
+    /// fallimento di rete non causato dal contenuto: dns, avvio del runtime, connessione
     Fetch(String),
     /// richiesta fermata dalla guard ssrf: punta a un indirizzo interno
     SsrfBlocked(String),
     /// configurazione o report che non si riescono a leggere o scrivere
     Config(String),
-    /// l'input sfora un limite dichiarato: dimensione, tempo, entità xml
+    /// l'input sfora un limite dichiarato: la dimensione, o il tempo della richiesta
     BudgetExceeded(String),
-    /// contenuto respinto in blocco dalla policy
+    /// contenuto respinto in blocco: vietato dalla policy o non ispezionabile
     Refused(String),
     /// errore nel parsing o nella riscrittura del documento
     Parse(String),

@@ -399,12 +399,18 @@ mod tests {
 
     #[test]
     fn detects_pdf_active_content() {
-        // tutti i marker di contenuto attivo
+        // i marker che indicano esecuzione di codice
         assert!(pdf_has_active_content(b"%PDF-1.7 /JavaScript"));
         assert!(pdf_has_active_content(b"%PDF-1.7 /JS"));
-        assert!(pdf_has_active_content(b"%PDF-1.7 /OpenAction"));
-        assert!(pdf_has_active_content(b"%PDF-1.7 /AA"));
         assert!(pdf_has_active_content(b"%PDF-1.7 /Launch"));
+
+        // '/OpenAction' e '/AA' dicono quando qualcosa accade, non cosa
+        assert!(!pdf_has_active_content(b"%PDF-1.7 /OpenAction [3 0 R /Fit]"));
+        assert!(!pdf_has_active_content(b"%PDF-1.7 /AA"));
+
+        // restano pericolosi quando l'azione che indicano esegue codice, ma a
+        // farli scattare e' il marker del codice, non quello dell'azione
+        assert!(pdf_has_active_content(b"%PDF-1.7 /OpenAction << /S /JavaScript >>"));
 
         // PDF senza contenuto attivo
         assert!(!pdf_has_active_content(

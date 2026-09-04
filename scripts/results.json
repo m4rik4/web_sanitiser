@@ -1,0 +1,523 @@
+{
+  "ambiente": {
+    "data": "2026-09-04 18:31",
+    "core": 16,
+    "reps": 5,
+    "binario": "C:\\Users\\fbarb\\Documents\\GitHub\\web_sanitiser\\target\\release\\web-sanitiser.exe"
+  },
+  "correttezza": {
+    "righe": [
+      {
+        "campione": "benign/simple.html",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": false,
+        "conforme": true
+      },
+      {
+        "campione": "benign/tricky-but-legit.html",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 1,
+        "regole": [
+          "neutralise-uri-scheme"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "benign/article.html",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": false,
+        "conforme": true
+      },
+      {
+        "campione": "benign/form-legit.html",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": false,
+        "conforme": true
+      },
+      {
+        "campione": "benign/styles-inline.html",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": false,
+        "conforme": true
+      },
+      {
+        "campione": "benign/unicode-legit.html",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": false,
+        "conforme": true
+      },
+      {
+        "campione": "benign/benign.css",
+        "label": "benign",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": false,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/xss-script-tag.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 1,
+        "regole": [
+          "remove-script"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/inline-handler.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 2,
+        "regole": [
+          "strip-inline-handler",
+          "strip-inline-handler"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/js-uri.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 2,
+        "regole": [
+          "neutralise-uri-scheme",
+          "neutralise-uri-scheme"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/meta-refresh.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 1,
+        "regole": [
+          "remove-meta-refresh"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/ssrf-internal.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 3,
+        "regole": [
+          "block-ssrf-reference",
+          "block-ssrf-reference",
+          "block-ssrf-reference"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/data-uri.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 2,
+        "regole": [
+          "neutralise-uri-scheme",
+          "neutralise-uri-scheme"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/object-embed.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 3,
+        "regole": [
+          "block-listed-host",
+          "neutralise-uri-scheme",
+          "remove-active-embed"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/iframe-embed.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 2,
+        "regole": [
+          "block-listed-host",
+          "remove-active-embed"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/idn-homograph.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 1,
+        "regole": [
+          "flag-idn-homograph"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/host-split.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 2,
+        "regole": [
+          "flag-host-split",
+          "flag-host-split"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/ip-decimal-ssrf.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 2,
+        "regole": [
+          "block-ssrf-reference",
+          "block-ssrf-reference"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/css-malicious.css",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 3,
+        "regole": [
+          "neutralise-css-url",
+          "remove-css-expression",
+          "remove-css-import"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/active-script.js",
+        "label": "malicious",
+        "status": "refused",
+        "atteso": "refused",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/xml-bomb.xml",
+        "label": "malicious",
+        "status": "refused",
+        "atteso": "refused",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/huge-image.png",
+        "label": "malicious",
+        "status": "refused",
+        "atteso": "refused",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/scripted-pdf.pdf",
+        "label": "malicious",
+        "status": "refused",
+        "atteso": "refused",
+        "azioni": 0,
+        "regole": [],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      },
+      {
+        "campione": "malicious/relative-active-content.html",
+        "label": "malicious",
+        "status": "sanitised",
+        "atteso": "sanitised",
+        "azioni": 3,
+        "regole": [
+          "remove-script",
+          "remove-script",
+          "remove-active-embed"
+        ],
+        "mancanti": [],
+        "toccato": true,
+        "conforme": true
+      }
+    ],
+    "tp": 17,
+    "fn": 0,
+    "fp": 1,
+    "tn": 6,
+    "detection_rate": 1.0,
+    "false_positive_rate": 0.14285714285714285,
+    "conformi": 24,
+    "totale": 24,
+    "non_conformi": []
+  },
+  "prestazioni": {
+    "latenza": [
+      {
+        "bytes": 16552,
+        "copie": 64,
+        "tempo_lotto_s": 0.11756749998312443,
+        "latenza_s": 0.0018369921872363193,
+        "mib_s": 8.592969199778945
+      },
+      {
+        "bytes": 65948,
+        "copie": 64,
+        "tempo_lotto_s": 0.20268799999030307,
+        "latenza_s": 0.0031669999998484855,
+        "mib_s": 19.858829750984615
+      },
+      {
+        "bytes": 262550,
+        "copie": 31,
+        "tempo_lotto_s": 0.29026779998093843,
+        "latenza_s": 0.00936347741873995,
+        "mib_s": 26.740833621421363
+      },
+      {
+        "bytes": 1048984,
+        "copie": 7,
+        "tempo_lotto_s": 0.230883400014136,
+        "latenza_s": 0.03298334285916228,
+        "mib_s": 30.330130678164434
+      },
+      {
+        "bytes": 4194464,
+        "copie": 2,
+        "tempo_lotto_s": 0.2562601999961771,
+        "latenza_s": 0.12813009999808855,
+        "mib_s": 31.21946043865024
+      }
+    ],
+    "throughput": [
+      {
+        "threads": 1,
+        "tempo_s": 0.3762994999997318,
+        "input_s": 318.8949227944378,
+        "mib_s": 20.056230896422942
+      },
+      {
+        "threads": 8,
+        "tempo_s": 0.14172359998337924,
+        "input_s": 846.7185423886573,
+        "mib_s": 53.25259631485669
+      },
+      {
+        "threads": 16,
+        "tempo_s": 0.12957240000832826,
+        "input_s": 926.1231557977394,
+        "mib_s": 58.246583822774234
+      }
+    ],
+    "fetch": [
+      {
+        "rotta": "/html/resource-count-bomb",
+        "senza_s": 0.03887539997231215,
+        "con_s": 0.05726450000656769,
+        "delta_s": 0.018389100034255534,
+        "sotto_risorse": 20,
+        "altre_azioni_crawl": 1
+      },
+      {
+        "rotta": "/html/recursive-include",
+        "senza_s": 0.03628189995652065,
+        "con_s": 0.03560089995153248,
+        "delta_s": -0.0006810000049881637,
+        "sotto_risorse": 1,
+        "altre_azioni_crawl": 0
+      }
+    ]
+  },
+  "scalabilita": {
+    "punti": [
+      {
+        "threads": 1,
+        "tempo_s": 0.3569499000441283,
+        "speedup": 1.0,
+        "efficienza": 1.0
+      },
+      {
+        "threads": 2,
+        "tempo_s": 0.25670550001086667,
+        "speedup": 1.3905035148410072,
+        "efficienza": 0.6952517574205036
+      },
+      {
+        "threads": 3,
+        "tempo_s": 0.19539660000009462,
+        "speedup": 1.826796884101133,
+        "efficienza": 0.6089322947003777
+      },
+      {
+        "threads": 4,
+        "tempo_s": 0.18480889999773353,
+        "speedup": 1.9314540590226221,
+        "efficienza": 0.48286351475565553
+      },
+      {
+        "threads": 5,
+        "tempo_s": 0.15811029996257275,
+        "speedup": 2.257600549291375,
+        "efficienza": 0.451520109858275
+      },
+      {
+        "threads": 6,
+        "tempo_s": 0.14477730001090094,
+        "speedup": 2.4655101318870565,
+        "efficienza": 0.41091835531450943
+      },
+      {
+        "threads": 7,
+        "tempo_s": 0.14411009999457747,
+        "speedup": 2.4769249348765943,
+        "efficienza": 0.3538464192680849
+      },
+      {
+        "threads": 8,
+        "tempo_s": 0.139848799968604,
+        "speedup": 2.5523987343778667,
+        "efficienza": 0.31904984179723334
+      },
+      {
+        "threads": 10,
+        "tempo_s": 0.14071999996667728,
+        "speedup": 2.536596788861957,
+        "efficienza": 0.25365967888619567
+      },
+      {
+        "threads": 12,
+        "tempo_s": 0.1331550999893807,
+        "speedup": 2.680707686544455,
+        "efficienza": 0.22339230721203793
+      },
+      {
+        "threads": 14,
+        "tempo_s": 0.1404688999755308,
+        "speedup": 2.5411311692930445,
+        "efficienza": 0.18150936923521746
+      },
+      {
+        "threads": 16,
+        "tempo_s": 0.1293936999863945,
+        "speedup": 2.758634308174671,
+        "efficienza": 0.17241464426091693
+      }
+    ],
+    "core": 16
+  },
+  "memoria": {
+    "per_taglia": [
+      {
+        "bytes": 16552,
+        "picco_bytes": 7147520
+      },
+      {
+        "bytes": 65948,
+        "picco_bytes": 7782400
+      },
+      {
+        "bytes": 262550,
+        "picco_bytes": 8822784
+      },
+      {
+        "bytes": 1048984,
+        "picco_bytes": 11943936
+      },
+      {
+        "bytes": 4194464,
+        "picco_bytes": 23130112
+      }
+    ],
+    "per_thread": [
+      {
+        "threads": 1,
+        "picco_bytes": 34648064
+      },
+      {
+        "threads": 2,
+        "picco_bytes": 34807808
+      },
+      {
+        "threads": 8,
+        "picco_bytes": 34906112
+      },
+      {
+        "threads": 16,
+        "picco_bytes": 36352000
+      }
+    ]
+  }
+}

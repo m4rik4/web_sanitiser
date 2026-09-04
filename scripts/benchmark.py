@@ -1,29 +1,3 @@
-"""Valutazione sperimentale del web sanitiser (traccia sez. 7).
-
-Misura le quattro cose che la traccia chiede e ne fa i grafici:
-
-  correttezza   detection rate sui campioni maligni e falsi positivi sui benigni,
-                contro `corpus/ground_truth.json`
-  prestazioni   latenza per input in funzione della dimensione, throughput, e
-                (con --origin) il costo del fetch delle sotto-risorse
-  scalabilita'  curve di speed-up ed efficienza al crescere dei worker
-  memoria       picco di memoria residente per dimensione e per worker
-
-Uso:
-    python scripts/benchmark.py                                # tutto
-    python scripts/benchmark.py --origin http://localhost:3100 # incluso il fetch
-    python scripts/benchmark.py --quick                        # prova della catena
-    python scripts/benchmark.py --only scalabilita
-
-Dati grezzi in `scripts/results.json`, figure in `scripts/figures/`.
-
-Le misure si prendono solo su `cargo build --release`, e ogni punto e' la
-mediana di --reps esecuzioni (la prima si scarta: dalla seconda in poi gli input
-sono nella page cache e si misura il tool, non il disco). Il tempo di parete
-include l'avvio del processo e la scrittura degli output ripuliti: e' la latenza
-che vede chi usa la cli, ed e' bene dichiararlo nella relazione.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -53,22 +27,12 @@ SCRATCH = SCRIPTS / ".scratch"      # output ripuliti e report usa-e-getta
 TAGLIE_KB = [16, 64, 256, 1024, 4096]
 BATCH_N, BATCH_KB = 120, 64
 
-# Rotte di evil-origin per il confronto con e senza fetch delle sotto-risorse.
-# Servono pagine che referenzino risorse sulla *stessa* origine: il crawl gira
-# solo nel ramo HTML e parte da `clean`, cioe' dall'html gia' sanitizzato, quindi
-# una pagina i cui riferimenti ostili sono appena stati rimossi non ha piu'
-# niente da scaricare. Queste due mettono in moto il crawler e ne saggiano i
-# limiti: max_fetch_requests la prima, max_fetch_depth la seconda.
-# Qui interessa solo il costo: che gli scenari siano sanitizzati correttamente lo
-# verifica gia' tests/evil_origin_test.rs.
+# rotte di evil-origin per il confronto con e senza fetch delle sotto-risorse
 ROTTE_FETCH = ["/html/resource-count-bomb", "/html/recursive-include"]
 
 BLU, ARANCIO, VERDE, GRIGIO = "#2a78d6", "#eb6834", "#1baf7a", "#898781"
 
-
-# --------------------------------------------------------------------------
 # esecuzione della cli e cronometro
-# --------------------------------------------------------------------------
 
 def trova_binario(esplicito=None) -> Path:
     if esplicito:
@@ -81,13 +45,6 @@ def trova_binario(esplicito=None) -> Path:
 
 
 def esegui(binario: Path, inputs, threads=1, config=POLICY, memoria=False, report=False):
-    """Una esecuzione della cli. Ritorna (tempo, picco_byte, report_json).
-
-    stdout e stderr sul dispositivo nullo e report su file: il costo di un
-    terminale che scorre finirebbe dentro il tempo misurato. Quando gli input
-    sono tanti si passa la directory, che la cli espande da sola (su Windows la
-    riga di comando ha un limite di ~32k caratteri).
-    """
     out_dir, rep_path = SCRATCH / "out", SCRATCH / "report.json"
     shutil.rmtree(out_dir, ignore_errors=True)
     cmd = [str(binario)]
@@ -118,35 +75,21 @@ def esegui(binario: Path, inputs, threads=1, config=POLICY, memoria=False, repor
         proc.wait()
     tempo = time.perf_counter() - t0
 
-    # 0 = tutto sanitizzato, 1 = almeno un rifiuto: entrambi esiti legittimi in un
-    # benchmark. Qualunque altro codice e' un'esecuzione fallita - argomenti
-    # rifiutati (2), panic del binario (101), crash - e non deve finire nella
-    # mediana come se fosse una misura buona
+    # 0 vuol dire tutto sanitizzato e 1 almeno un rifiuto, qualunque altro codice è un'esecuzione fallita 
     if proc.returncode not in (0, 1):
-        raise SystemExit(f"la cli e' uscita con codice {proc.returncode}: {' '.join(cmd)}")
+        raise SystemExit(f"la cli è uscita con codice {proc.returncode}: {' '.join(cmd)}")
     dati = json.loads(rep_path.read_text(encoding="utf-8")) if report and rep_path.exists() else None
     return tempo, picco, dati
 
 
 def cronometra(fn, reps: int) -> float:
-    """Mediana di reps esecuzioni, scartando la prima.
-
-    Mediana e non media: i tempi hanno una coda lunga a destra (lo scheduler, un
-    processo che parte) e la media la insegue.
-    """
     fn()
     return statistics.median(fn() for _ in range(reps))
 
 
 def policy_loopback(fetch: bool) -> Path:
-    """Policy per evil-origin: gira in loopback e la guard SSRF lo bloccherebbe.
-    Stessa deroga di tests/evil_origin_test.rs, valida solo sul banco di prova."""
     p = json.loads(POLICY.read_text(encoding="utf-8"))
-    # Stessi valori che tests/evil_origin_test.rs usa sugli scenari che attivano
-    # il crawl, cosi' la misura descrive la configurazione che i test verificano:
-    # profondita' 2, e tetto sui byte alzato perche' a fermare il crawl sia il
-    # numero di richieste e non il budget di byte. Sono due deviazioni dal
-    # default di produzione, da dichiarare nella relazione.
+    # stessi valori che tests/evil_origin_test.rs usa sugli scenari che attivano il crawl
     p.update({"allow_loopback": True, "fetch_host_allowlist": ["localhost", "127.0.0.1"],
               "fetch_subresources": fetch, "max_fetch_depth": 2,
               "max_total_fetch_bytes": 100 * 1024 * 1024})
@@ -164,16 +107,10 @@ def leggibile(n) -> str:
             return f"{v:.1f} {u}"
         v /= 1024
 
-
-# --------------------------------------------------------------------------
 # corpus sintetico
-# --------------------------------------------------------------------------
-#
-# Il corpus di `corpus/` serve alla correttezza: casi scelti a mano, piccoli e
-# tutti diversi. Per latenza e throughput servono input della stessa natura ma
-# di dimensione crescente, altrimenti non si sa se una curva sale perche' il
-# file e' piu' grande o perche' e' fatto in modo diverso. Qui le pagine sono la
-# ripetizione dello stesso blocco, con una parte fissa di costrutti pericolosi.
+# il corpus di `corpus/` serve alla correttezza: casi scelti a mano, piccoli e tutti diversi
+# per latenza e throughput servono invece input della stessa natura ma di dimensione crescente
+# qui le pagine sono la ripetizione dello stesso blocco
 
 BLOCCO = """<p>testo di riempimento numero {n}, con un <a href="https://example.org/{n}">link lecito</a>.</p>
 <div onclick="alert({n})">handler inline da rimuovere</div>
@@ -195,8 +132,6 @@ def genera_pagina(path: Path, byte_voluti: int) -> int:
         lung += len(b)
     pezzi.append("</body>\n</html>\n")
     path.parent.mkdir(parents=True, exist_ok=True)
-    # newline="" per non far tradurre \n in \r\n su Windows: la dimensione del
-    # file dev'essere la stessa su tutte le piattaforme
     with open(path, "w", encoding="utf-8", newline="") as fh:
         fh.write("".join(pezzi))
     return path.stat().st_size
@@ -216,21 +151,9 @@ def genera_corpus(taglie, batch_n, batch_kb) -> dict:
     return {"scaling": scaling, "batch": {"path": str(batch), "count": batch_n,
                                           "bytes": totale}}
 
-
-# --------------------------------------------------------------------------
 # 1. correttezza
-# --------------------------------------------------------------------------
 
 def misura_correttezza(binario) -> dict:
-    """Detection rate e falsi positivi contro la ground truth.
-
-    Un campione maligno conta come rilevato se e' stato rifiutato oppure se ha
-    prodotto almeno un'azione; una pagina benigna conta come falso positivo con
-    lo stesso criterio. A parte si conta la conformita' alla ground truth, piu'
-    severa: lo stato dev'essere quello atteso *e* devono essere scattate le
-    regole attese. Un campione rilevato ma non conforme e' il caso da discutere:
-    la difesa ha funzionato, ma per una regola diversa da quella prevista.
-    """
     gt = json.loads((CORPUS / "ground_truth.json").read_text(encoding="utf-8"))
     righe = []
     print(f"[correttezza] {len(gt['entries'])} campioni")
@@ -261,18 +184,14 @@ def misura_correttezza(binario) -> dict:
           f"{ris['false_positive_rate']:.1%}, conformi {ris['conformi']}/{ris['totale']}")
     return ris
 
-
-# --------------------------------------------------------------------------
 # 2. prestazioni
-# --------------------------------------------------------------------------
 
 def misura_prestazioni(binario, corpus, reps, origin) -> dict:
-    """Latenza per dimensione, throughput, e il costo del fetch."""
+    """latenza per dimensione, throughput, e il costo del fetch"""
     print("[prestazioni] latenza in funzione della dimensione (1 thread)")
     latenze = []
     for voce in corpus["scaling"]:
-        # si misura un lotto di copie e si divide: su un file da 16 KiB il costo
-        # di avvio del processo sarebbe piu' grande del lavoro da misurare
+        # si misura un lotto di copie e si divide
         n = max(2, min(64, (8 * 1024 * 1024) // voce["bytes"]))
         d = SCRATCH / f"lat_{voce['kb']}"
         shutil.rmtree(d, ignore_errors=True)
@@ -316,14 +235,10 @@ def misura_prestazioni(binario, corpus, reps, origin) -> dict:
                 print(f"  SALTATA {rotta}: {e}")
                 continue
 
-            # quante sotto-risorse il crawler ha davvero toccato: se sono zero la
-            # differenza fra le due policy non misura il download ma solo il
-            # controllo, e va detto invece di lasciarlo intendere dal grafico
+            # quante sotto-risorse il crawler ha davvero toccato
             azioni = [x.get("rule", "") for x in
                       (ultimo.get("report") or {}).get("jobs", [{}])[0].get("actions", [])]
-            # `fetch-subresource` sono le richieste andate a buon fine: stesso
-            # criterio del test. Budget esauriti, rifiuti ed errori si contano a
-            # parte, perche' dicono *perche'* il crawl si e' fermato
+            # `fetch-subresource` sono le richieste andate a buon fine
             n_sub = sum(1 for r in azioni if r == "fetch-subresource")
             n_altre = sum(1 for r in azioni if r.startswith(
                 ("subresource-", "reject-subresource", "reject-active-subresource",
@@ -340,19 +255,9 @@ def misura_prestazioni(binario, corpus, reps, origin) -> dict:
 
     return {"latenza": latenze, "throughput": throughput, "fetch": fetch}
 
-
-# --------------------------------------------------------------------------
-# 3. scalabilita'
-# --------------------------------------------------------------------------
+# 3. scalabilità
 
 def misura_scalabilita(binario, corpus, reps) -> dict:
-    """Speed-up ed efficienza al crescere dei worker.
-
-    Il batch e' fatto di file tutti uguali di proposito: con input di dimensione
-    molto diversa l'ultimo file lungo terrebbe occupato un worker a coda gia'
-    vuota, e la curva misurerebbe lo sbilanciamento del carico invece del
-    parallelismo del motore.
-    """
     batch = Path(corpus["batch"]["path"])
     core = os.cpu_count() or 1
     gradi = sorted({t for t in range(1, core + 1) if t <= 8 or t % 2 == 0 or t == core})
@@ -368,21 +273,9 @@ def misura_scalabilita(binario, corpus, reps) -> dict:
     print(f"  -> speed-up massimo {migliore['speedup']:.2f}x con {migliore['threads']} thread")
     return {"punti": punti, "core": core}
 
-
-# --------------------------------------------------------------------------
 # 4. memoria
-# --------------------------------------------------------------------------
 
 def misura_memoria(binario, corpus, reps) -> dict:
-    """Picco di memoria residente, per dimensione dell'input e per worker.
-
-    Il numero interessante e' come il picco cresce con l'input: un motore che
-    riscrive in streaming e presta i byte invece di duplicarli tiene la crescita
-    piccola rispetto alla dimensione del file.
-
-    Il picco si campiona ogni 3 ms con psutil, quindi un picco molto breve puo'
-    sfuggire: e' una stima per difetto, da dichiarare come tale.
-    """
     print("[memoria] picco su un solo input, taglie crescenti")
     per_taglia = []
     for voce in corpus["scaling"]:
@@ -404,10 +297,7 @@ def misura_memoria(binario, corpus, reps) -> dict:
         print(f"  t={th:>3} -> picco {leggibile(med):>10}")
     return {"per_taglia": per_taglia, "per_thread": per_thread}
 
-
-# --------------------------------------------------------------------------
 # grafici
-# --------------------------------------------------------------------------
 
 def _stile():
     plt.rcParams.update({"font.size": 9, "axes.titlesize": 10, "axes.titleweight": "bold",
@@ -427,7 +317,6 @@ def _byte(x, _=None):
 
 def _salva(fig, nome):
     FIGURES.mkdir(parents=True, exist_ok=True)
-    # 200 dpi: a schermo si legge, e stampata dentro la relazione non sgrana
     fig.savefig(FIGURES / f"{nome}.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
     print(f"[figura] scripts/figures/{nome}.png")
@@ -458,9 +347,6 @@ def figura_prestazioni(d):
     xs = [p["bytes"] for p in lat]
     ys = [p["latenza_s"] * 1000 for p in lat]
     a1.plot(xs, ys, color=BLU, marker="o", label="misurata", zorder=3)
-    # riferimento a pendenza 1: se i punti le stanno paralleli il costo e'
-    # lineare nella dimensione, cioe' quel che ci si aspetta da un rewriter
-    # in streaming
     k = ys[0] / xs[0]
     a1.plot(xs, [k * x for x in xs], "--", color=GRIGIO, linewidth=1.4,
             label="crescita lineare")
@@ -542,9 +428,6 @@ def figura_fetch(righe):
     _griglia(ax, "x")
     _salva(fig, "fig5_sottorisorse")
 
-
-# --------------------------------------------------------------------------
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -568,7 +451,7 @@ def main() -> int:
     corpus = genera_corpus(taglie, batch_n, BATCH_KB) if servono_input else None
 
     ris = {}
-    if (SCRIPTS / "results.json").exists():        # non si perdono le misure gia' prese
+    if (SCRIPTS / "results.json").exists():        # così non si perdono le misure già prese
         ris = json.loads((SCRIPTS / "results.json").read_text(encoding="utf-8"))
     ris["ambiente"] = {"data": time.strftime("%Y-%m-%d %H:%M"), "core": os.cpu_count(),
                        "reps": reps, "binario": str(binario)}

@@ -6,8 +6,8 @@
 .vscode/
 
 # output prodotti dal tool quando lo eseguiamo
-/reports
 /sanitised-out
+/scripts/figures
 
 # input sintetici e file di appoggio dei benchmark, li rigenera scripts/benchmark.py
 /scripts/.synthetic

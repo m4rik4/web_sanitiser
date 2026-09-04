@@ -228,7 +228,7 @@ pub fn pdf_has_active_content(bytes: &[u8]) -> bool {
     if !bytes.starts_with(b"%PDF-") {
         return false;
     }
-    let markers: [&[u8]; 5] = [b"/JavaScript", b"/JS", b"/OpenAction", b"/AA", b"/Launch"];
+        let markers: [&[u8]; 3] = [b"/JavaScript", b"/JS", b"/Launch"];
     markers.iter().any(|m| find_bytes(bytes, m))
 }
 
